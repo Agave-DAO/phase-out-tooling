@@ -1,0 +1,2 @@
+AgaveTreasuryWithdrawerTest:test_maxWithdraw() (gas: 3154462)
+AgaveTreasuryWithdrawerTest:test_withdrawAmount(uint256,uint8) (runs: 256, μ: 440806, ~: 463183)
