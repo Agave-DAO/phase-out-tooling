@@ -17,7 +17,12 @@ contract AgaveTreasuryWithdrawerTest is Test {
     address[] public reserves;
     address[] public agTokens;
 
+    uint256 gnosisFork;
+    string RPC_GNOSIS = vm.envString("RPC_GNOSIS");
+
     function setUp() public {
+        gnosisFork = vm.createFork(RPC_GNOSIS);
+        vm.selectFork(gnosisFork);
         withdrawer = new AgaveTreasuryWithdrawer();
         DAO = withdrawer.DAO();
         reserves = pool.getReservesList();

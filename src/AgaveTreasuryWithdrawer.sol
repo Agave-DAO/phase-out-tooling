@@ -14,19 +14,13 @@ contract AgaveTreasuryWithdrawer {
     uint256 private constant UINT256_MAX =
         115792089237316195423570985008687907853269984665640564039457584007913129639935;
 
-
     constructor() {
         reserves = pool.getReservesList();
         for (uint8 i = 0; i < reserves.length; i++) {
-            DataTypes.ReserveData memory tokenData = pool.getReserveData(reserves[i]);    
-            agTokens.push(tokenData.aTokenAddress); 
-        }
-    }
-
-    function withdrawMax() public {
-        uint8 i = 0;
-        for (i; i < reserves.length; i++) {
-            withdrawAssetOnBehalf(reserves[i], agTokens[i], 100000 ether);
+            DataTypes.ReserveData memory tokenData = pool.getReserveData(
+                reserves[i]
+            );
+            agTokens.push(tokenData.aTokenAddress);
         }
     }
 
@@ -34,16 +28,22 @@ contract AgaveTreasuryWithdrawer {
         address reserve,
         address agToken,
         uint256 amount
-    ) public returns (uint256) {
+    ) public {
         uint256 balance = IERC20(agToken).balanceOf(DAO);
         uint256 available = IERC20(reserve).balanceOf(agToken);
-        if (balance == 0 || available == 0 || amount == 0) return 0;
-        amount = (amount > balance) ? balance : amount;
-        amount = (amount > available) ? available : amount;
-        IERC20(agToken).transferFrom(DAO, address(this), amount);
+        if (balance == 0 || available == 0 || amount == 0) return;
+        uint256 val = (amount > balance) ? balance : amount;
+        val = (val > available) ? available : val;
+        IERC20(agToken).transferFrom(DAO, address(this), val);
 
         uint256 thisBalance = IERC20(agToken).balanceOf(address(this));
         pool.withdraw(reserve, thisBalance, DAO);
-        return thisBalance;
+    }
+
+    function withdrawMax() public {
+        uint8 i = 0;
+        for (i; i < reserves.length; i++) {
+           withdrawAssetOnBehalf(reserves[i], agTokens[i], 100000 ether);
+        }
     }
 }

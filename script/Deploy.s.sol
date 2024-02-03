@@ -6,6 +6,7 @@ import {console2} from "forge-std/Test.sol";
 
 // Order type
 import "src/AgaveTreasuryWithdrawer.sol";
+import "src/AgaveReimbursementReclaimer.sol";
 
 contract Deploy is Script {
     function run() external {
@@ -28,9 +29,13 @@ contract Deploy is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        // Deploy DutchAuction
+        // Deploy AgaveTreasuryWithdrawer
         AgaveTreasuryWithdrawer withdrawer = new AgaveTreasuryWithdrawer();
-        console2.log("Deployed Withdrawer: %s", address(withdrawer));
+        console2.log("Deployed Treasury Withdrawer: %s", address(withdrawer));
+
+        // Deploy AgaveReimbursementReclaimer
+        AgaveReimbursementReclaimer reclaimer = new AgaveReimbursementReclaimer();
+        console2.log("Deployed Reimbursement Reclaimer: %s", address(reclaimer));
 
         vm.stopBroadcast();
     }
