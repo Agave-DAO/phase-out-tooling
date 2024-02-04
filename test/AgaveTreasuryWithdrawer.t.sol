@@ -16,7 +16,6 @@ contract AgaveTreasuryWithdrawerTest is Test {
 
     address[] public reserves;
     address[] public agTokens;
-
     uint256 gnosisFork;
     string RPC_GNOSIS = vm.envString("RPC_GNOSIS");
 
@@ -31,7 +30,7 @@ contract AgaveTreasuryWithdrawerTest is Test {
             DataTypes.ReserveData memory tokenData = pool.getReserveData(reserves[i]);    
             agTokens.push(tokenData.aTokenAddress); 
             vm.prank(DAO);
-            IERC20(agTokens[i]).approve(address(withdrawer), 10000000000 ether);
+            IERC20(agTokens[i]).approve(address(withdrawer), UINT256_MAX);
         }
     }
 
@@ -57,5 +56,27 @@ contract AgaveTreasuryWithdrawerTest is Test {
         console2.log("%s %s", owned1, owned2);
         assertApproxEqAbs(owned2, owned1 + withdrawn, 100);
         assertApproxEqAbs(available2, available1 - withdrawn, 100);
+    }
+
+    function test_isWithdrawable()public{
+        getData();
+        bool isok = withdrawer.isWithdrawable();
+        test_maxWithdraw();
+        assertTrue(isok);
+        test_maxWithdraw();
+        bool isnot = withdrawer.isWithdrawable();
+        getData();
+        assertFalse(isnot);
+        
+    }
+
+    function getData() view public {
+        for (uint8 i = 0; i < reserves.length; i++) {
+            DataTypes.ReserveData memory tokenData = pool.getReserveData(reserves[i]);    
+            uint256 balance = IERC20(agTokens[i]).balanceOf(DAO);
+            uint256 available = IERC20(reserves[i]).balanceOf(agTokens[i]);
+            console2.log(reserves[i]);
+            console2.log("bal: %s ava: %s liquidity: %s", balance, available, tokenData.currentLiquidityRate);
+        }
     }
 }

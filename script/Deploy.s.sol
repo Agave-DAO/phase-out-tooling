@@ -9,6 +9,10 @@ import "src/AgaveTreasuryWithdrawer.sol";
 import "src/AgaveReimbursementReclaimer.sol";
 
 contract Deploy is Script {
+
+    uint256 gnosis;
+    string RPC_GNOSIS = vm.envString("RPC_GNOSIS");
+
     function run() external {
         /*//////////////////////////////////////////////////////////////
                                 KEY MANAGEMENT
@@ -22,6 +26,13 @@ contract Deploy is Script {
         } else if (privKey > 1 ether) {
             deployerPrivateKey = privKey;
         }
+
+        /*//////////////////////////////////////////////////////////////
+                                NETWORK MANAGEMENT
+        //////////////////////////////////////////////////////////////*/
+
+        gnosis = vm.createFork(RPC_GNOSIS);
+        vm.selectFork(gnosis);
 
         /*//////////////////////////////////////////////////////////////
                                 OPERATIONS

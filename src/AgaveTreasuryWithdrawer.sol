@@ -43,7 +43,17 @@ contract AgaveTreasuryWithdrawer {
     function withdrawMax() public {
         uint8 i = 0;
         for (i; i < reserves.length; i++) {
-           withdrawAssetOnBehalf(reserves[i], agTokens[i], 100000 ether);
+            withdrawAssetOnBehalf(reserves[i], agTokens[i], UINT256_MAX);
         }
+    }
+
+    function isWithdrawable() public view returns (bool) {
+        uint8 i = 0;
+        for (i; i < reserves.length; i++) {
+            uint256 balance = IERC20(agTokens[i]).balanceOf(DAO);
+            uint256 available = IERC20(reserves[i]).balanceOf(agTokens[i]);
+            if (balance > 0 && available > 100000) return true;
+        }
+        return false;
     }
 }
