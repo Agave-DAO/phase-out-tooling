@@ -9,6 +9,8 @@ contract AgaveTreasuryRedeemer {
     AgaveTreasuryWithdrawer withdrawer = AgaveTreasuryWithdrawer(0x91eD5609E5b9d6991F024570025c872382890018);
     address public DAO = 0xb4c575308221CAA398e0DD2cDEB6B2f10d7b000A;
     IERC20 AGVE = IERC20(0x3a97704a1b25F08aa230ae53B352e2e72ef52843);
+    uint256 totalSupply = AGVE.totalSupply();
+
     uint256 private constant UINT256_MAX =
         115792089237316195423570985008687907853269984665640564039457584007913129639935;
 
@@ -21,24 +23,33 @@ contract AgaveTreasuryRedeemer {
         0x4ECaBa5870353805a9F068101A40E0f32ed605C6 // USDT
     ];
 
-    function getCirculatingSupply() public view returns(uint256){
-       uint DAO_Supply = AGVE.balanceOf(DAO);
-       return AGVE.totalSupply() - DAO_Supply;
-    }
+    event Redeemed(uint WETH, uint GNO, uint sDAI, uint WXDAI, uint USDC, uint USDT);
 
-    function redeem() public {
-        withdrawer.withdrawMax();
+    function redeem(uint256 amount) public {
+        require(amount > 1e12, "Amount too Low to redeem");
+
         uint256 userSupply = AGVE.balanceOf(msg.sender);
-        require(AGVE.allowance(msg.sender, address(this)) >= userSupply, "Needs approval higher than Balance");
-        AGVE.transferFrom(msg.sender, DAO, userSupply);
-        uint256 circSupply = getCirculatingSupply();
+        amount = (amount > userSupply) ? userSupply : amount;
+        require(AGVE.allowance(msg.sender, address(this)) >= amount, "Needs approval higher than Amount");
+        AGVE.transferFrom(msg.sender, DAO, amount);
+
+        uint256 daoSupply = AGVE.balanceOf(DAO);
+        uint256 circSupply = totalSupply - daoSupply;
+        uint256 userShare = (amount * 1e8) / circSupply;
+
+        //withdrawer.withdrawMax();
+        uint256[] memory Rmed = new uint256[](6);
         uint8 i = 0;
         for (i; i < assets.length; i++) {       
             IERC20 asset = IERC20(assets[i]);
-            uint256 userShare = (userSupply * 1e8) / circSupply;
             uint256 amountToRedeem = (asset.balanceOf(DAO) * userShare) / 1e8;
             require(IERC20(assets[i]).transferFrom(DAO,msg.sender, amountToRedeem), "transfer failed");
+            Rmed[i] = amountToRedeem;
         }
-        require(AGVE.balanceOf(msg.sender) == 0, "Did not redeem full supply");     
+        emit Redeemed(Rmed[0], Rmed[1], Rmed[2], Rmed[3], Rmed[4], Rmed[5]); 
+    }
+
+    function redeemAll() public {
+        redeem(UINT256_MAX);
     }
 }
