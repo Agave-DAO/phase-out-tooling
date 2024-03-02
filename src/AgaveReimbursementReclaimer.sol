@@ -6,8 +6,7 @@ import {IERC20} from "lib/forge-std/src/interfaces/IERC20.sol";
 import {DataTypes} from "src/interfaces/DataTypes.sol";
 
 contract AgaveReimbursementReclaimer {
-    ILendingPool pool =
-        ILendingPool(0x5E15d5E33d318dCEd84Bfe3F4EACe07909bE6d9c);
+    ILendingPool pool = ILendingPool(0x5E15d5E33d318dCEd84Bfe3F4EACe07909bE6d9c);
     address public DAO = 0xb4c575308221CAA398e0DD2cDEB6B2f10d7b000A;
 
     address[] public merkleContracts = [
@@ -29,24 +28,34 @@ contract AgaveReimbursementReclaimer {
         0x870Bb2C024513B5c9A69894dCc65fB5c47e422f3
     ];
 
-    function withdrawAll() public {
+    struct TransactionData {
+        address to;
+        bytes data;
+        address asset;
+        uint256 assetAmount;
+    }
+
+    function encodeTightlyPacked(bytes[] memory arr) internal pure returns (bytes memory encoded) {
+        uint256 len = arr.length;
+        for (uint256 i = 0; i < len; i++) {
+            encoded = bytes.concat(encoded, abi.encodePacked(arr[i]));
+        }
+    }
+
+    function withdrawAll() public returns (TransactionData[] memory encoded_call) {
+        encoded_call = new TransactionData[](merkleContracts.length * assets.length);
         uint8 i = 0;
         for (i; i < merkleContracts.length; i++) {
             uint8 j = 0;
             for (j; j < assets.length; j++) {
                 address target = merkleContracts[i];
-                uint256 assetBal = IERC20(assets[j]).balanceOf(
-                    target
-                );
+                uint256 assetBal = IERC20(assets[j]).balanceOf(target);
                 if (assetBal > 0) {
-                   (bool success,) = target.call(
-                        abi.encodeWithSignature(
-                            "protocolFallback(address,uint256)",
-                            assets[j],
-                            assetBal
-                        )
-                    );
-                    require(success, "transfer failed");
+                    bytes memory callData =
+                        abi.encodeWithSignature("protocolFallback(address,uint256)", assets[j], assetBal);
+                    TransactionData memory call =
+                        TransactionData({to: target, data: callData, asset: assets[j], assetAmount: assetBal});
+                    encoded_call[((i * assets.length) + j)] = call;
                 }
             }
         }

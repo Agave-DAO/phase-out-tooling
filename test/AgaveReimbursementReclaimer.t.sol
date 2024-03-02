@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.20;
 
-import {Test, console2} from "forge-std/Test.sol";
+import {Test} from "forge-std/Test.sol";
+import "forge-std/console2.sol";
 import {AgaveReimbursementReclaimer} from "../src/AgaveReimbursementReclaimer.sol";
 import {IERC20} from "lib/forge-std/src/interfaces/IERC20.sol";
 import {ILendingPool} from "src/interfaces/ILendingPool.sol";
@@ -38,7 +39,7 @@ contract AgaveReimbursementReclaimerTest is Test {
         withdrawer = new AgaveReimbursementReclaimer();
         DAO = withdrawer.DAO();
     }
-
+    /*
     function test_withdrawAll() public {
         uint8 i = 0;
         vm.startPrank(DAO);
@@ -48,7 +49,6 @@ contract AgaveReimbursementReclaimerTest is Test {
                 address target = merkleContracts[i];
                 uint256 assetBal = IERC20(assets[j]).balanceOf(target);
                 if (assetBal > 0) {
-                    
                     (bool success, ) = target.call(
                         abi.encodeWithSignature(
                             "protocolFallback(address,uint256)",
@@ -62,11 +62,54 @@ contract AgaveReimbursementReclaimerTest is Test {
             }
         }
     }
+    */
 
-    function test_withdrawAll_DelegateCall() public {
+    function _test_withdrawAll_Snapshot() public {
         vm.startPrank(DAO);
-        address(withdrawer).delegatecall(abi.encodeWithSignature(
-                            "withdrawAll()"
-                        ));
+        AgaveReimbursementReclaimer.TransactionData[] memory call = withdrawer.withdrawAll();
+
+        console2.log("[");
+        for (uint256 i = 0; i < call.length; i++) {
+            string memory data = vm.toString(call[i].data);
+            address merkle = call[i].to;
+            address asset = call[i].asset;
+            uint256 amount = call[i].assetAmount;
+            if (amount > 0) {
+                console2.log("{");
+                console2.log('"to": "%s",', merkle);
+                console2.log('"operation": "0",');
+                console2.log('"value": "0.0",');
+                console2.log('"data": "%s",', data);
+                console2.log('"method": "protocolFallback(address,uint256)",');
+                console2.log('"params": ["%s", "%s"]', asset, amount);
+                console2.log("},");
+            }
+        }
+        console2.log("]");
+    }
+
+    function _test_withdrawAll_Safe() public {
+        vm.startPrank(DAO);
+        AgaveReimbursementReclaimer.TransactionData[] memory call = withdrawer.withdrawAll();
+
+        console2.log("[");
+        for (uint256 i = 0; i < call.length; i++) {
+            string memory data = vm.toString(call[i].data);
+            address merkle = call[i].to;
+            address asset = call[i].asset;
+            uint256 amount = call[i].assetAmount;
+            if (amount > 0) {
+                console2.log('{"to": "%s",', merkle);
+                console2.log('"value": "0","data": null,');
+                console2.log(
+                    '"contractMethod":{"inputs":[{"internalType":"contractIERC20","name":"token","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],'
+                );
+                console2.log('"name":"protocolFallback","payable":false},"contractInputsValues":{');
+                console2.log('"token": "%s",', asset);
+                console2.log('"amount": "%s"', amount);
+                console2.log("}},");
+            }
+        }
+        console2.log("]");
     }
 }

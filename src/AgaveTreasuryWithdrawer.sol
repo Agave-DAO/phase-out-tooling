@@ -6,8 +6,7 @@ import {IERC20} from "lib/forge-std/src/interfaces/IERC20.sol";
 import {DataTypes} from "src/interfaces/DataTypes.sol";
 
 contract AgaveTreasuryWithdrawer {
-    ILendingPool pool =
-        ILendingPool(0x5E15d5E33d318dCEd84Bfe3F4EACe07909bE6d9c);
+    ILendingPool pool = ILendingPool(0x5E15d5E33d318dCEd84Bfe3F4EACe07909bE6d9c);
     address public DAO = 0xb4c575308221CAA398e0DD2cDEB6B2f10d7b000A;
     address[] public agTokens;
     address[] public reserves;
@@ -17,18 +16,12 @@ contract AgaveTreasuryWithdrawer {
     constructor() {
         reserves = pool.getReservesList();
         for (uint8 i = 0; i < reserves.length; i++) {
-            DataTypes.ReserveData memory tokenData = pool.getReserveData(
-                reserves[i]
-            );
+            DataTypes.ReserveData memory tokenData = pool.getReserveData(reserves[i]);
             agTokens.push(tokenData.aTokenAddress);
         }
     }
 
-    function withdrawAssetOnBehalf(
-        address reserve,
-        address agToken,
-        uint256 amount
-    ) public {
+    function withdrawAssetOnBehalf(address reserve, address agToken, uint256 amount) public {
         uint256 balance = IERC20(agToken).balanceOf(DAO);
         uint256 available = IERC20(reserve).balanceOf(agToken);
         if (balance == 0 || available == 0 || amount == 0) return;

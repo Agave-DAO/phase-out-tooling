@@ -6,10 +6,10 @@ import {console2} from "forge-std/Test.sol";
 
 // Order type
 import "src/AgaveTreasuryWithdrawer.sol";
+import "src/AgaveTreasuryRedeemer.sol";
 import "src/AgaveReimbursementReclaimer.sol";
 
 contract Deploy is Script {
-
     uint256 gnosis;
     string RPC_GNOSIS = vm.envString("RPC_GNOSIS");
 
@@ -47,6 +47,11 @@ contract Deploy is Script {
         // Deploy AgaveReimbursementReclaimer
         AgaveReimbursementReclaimer reclaimer = new AgaveReimbursementReclaimer();
         console2.log("Deployed Reimbursement Reclaimer: %s", address(reclaimer));
+
+        // Deploy AgaveTreasuryRedeemer
+        AgaveTreasuryRedeemer redeemer = new AgaveTreasuryRedeemer();
+        console2.log("Deployed Treasury Redeemer: %s", address(redeemer));
+
 
         vm.stopBroadcast();
     }
