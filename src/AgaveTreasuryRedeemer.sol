@@ -6,7 +6,8 @@ import {IERC20} from "lib/forge-std/src/interfaces/IERC20.sol";
 import {DataTypes} from "src/interfaces/DataTypes.sol";
 
 contract AgaveTreasuryRedeemer {
-    AgaveTreasuryWithdrawer public withdrawer = AgaveTreasuryWithdrawer(0x91eD5609E5b9d6991F024570025c872382890018);
+    AgaveTreasuryWithdrawer public withdrawer =
+        AgaveTreasuryWithdrawer(0x91eD5609E5b9d6991F024570025c872382890018);
     address public DAO = 0xb4c575308221CAA398e0DD2cDEB6B2f10d7b000A;
     IERC20 AGVE = IERC20(0x3a97704a1b25F08aa230ae53B352e2e72ef52843);
     uint256 totalSupply = AGVE.totalSupply();
@@ -23,14 +24,23 @@ contract AgaveTreasuryRedeemer {
         0x4ECaBa5870353805a9F068101A40E0f32ed605C6 // USDT
     ];
 
-    event Redeemed(uint256 WETH, uint256 GNO, uint256 sDAI, uint256 WXDAI, uint256 USDC, uint256 USDT);
+    event Redeemed(
+        uint256 WETH,
+        uint256 GNO,
+        uint256 sDAI,
+        uint256 WXDAI,
+        uint256 USDC,
+        uint256 USDT
+    );
 
     function redeem(uint256 amount) public {
         require(amount >= 1e16, "Amount too Low to redeem");
-
         uint256 userSupply = AGVE.balanceOf(msg.sender);
         amount = (amount >= userSupply) ? userSupply : amount;
-        require(AGVE.allowance(msg.sender, address(this)) >= amount, "Needs approval higher than Amount");
+        require(
+            AGVE.allowance(msg.sender, address(this)) >= amount,
+            "Needs approval higher than Amount"
+        );
         uint256 daoSupply = AGVE.balanceOf(DAO);
         uint256 circSupply = totalSupply - daoSupply;
         require(AGVE.transferFrom(msg.sender, DAO, amount), "transfer failed");
@@ -38,8 +48,12 @@ contract AgaveTreasuryRedeemer {
         uint8 i = 0;
         for (i; i < assets.length; i++) {
             uint256 bal = IERC20(assets[i]).balanceOf(DAO);
-            uint256 amountToRedeem = ((bal * amount * 1e20) / circSupply) / 1e20;
-            require(IERC20(assets[i]).transferFrom(DAO, msg.sender, amountToRedeem), "transfer failed");
+            uint256 amountToRedeem = ((bal * amount * 1e20) / circSupply) /
+                1e20;
+            require(
+                IERC20(assets[i]).transferFrom(DAO, msg.sender, amountToRedeem),
+                "transfer failed"
+            );
             Rmed[i] = amountToRedeem;
         }
         emit Redeemed(Rmed[0], Rmed[1], Rmed[2], Rmed[3], Rmed[4], Rmed[5]);

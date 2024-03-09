@@ -31,6 +31,7 @@ contract AgaveTreasuryRedeemerTest is Test {
 
     address internal kpk = 0x458cD345B4C05e8DF39d0A07220feb4Ec19F5e6f;
     address internal dex = 0xBA12222222228d8Ba445958a75a0704d566BF2C8;
+    address internal hive = 0xc6c2E9EFB898A42DB4137B07b727b45e0C353d81;
     address testUser;
 
     function setUp() public {
@@ -38,7 +39,7 @@ contract AgaveTreasuryRedeemerTest is Test {
         vm.selectFork(gnosisFork);
         redeemer = new AgaveTreasuryRedeemer();
         DAO = 0xb4c575308221CAA398e0DD2cDEB6B2f10d7b000A;
-        testUser = kpk;
+        testUser = hive;
 
         for (uint8 i = 0; i < assets.length; i++) {
             vm.prank(DAO);
@@ -57,16 +58,21 @@ contract AgaveTreasuryRedeemerTest is Test {
 
     function test_sequenceOfUsers() public {
         uint256 burned = AGVE.balanceOf(DAO);
+        uint256[] memory preDAO = updateDAO();
+        uint256[] memory preUser = userBalances(testUser);
+
+        // testUser wallet
+        uint256 testBalance = AGVE.balanceOf(testUser);
+        uint256[] memory preExpRedemption = expectedRedemption(testBalance);
 
         // kpk wallet
         uint256 kpkBalance = AGVE.balanceOf(kpk);
         uint256[] memory kpkRedemptions = expectedRedemption(kpkBalance);
-        uint256[] memory preDAO = updateDAO();
-        uint256[] memory preUser = userBalances(testUser);
 
-        // dex wallet
+        // dex wallet - just needed large wallet with AGVE to impact circ supply
         uint256 dexBalance = AGVE.balanceOf(dex);
         uint256[] memory dexRedemption = expectedRedemption(dexBalance);
+
         vm.startPrank(dex);
         AGVE.approve(address(redeemer), dexBalance);
         redeemer.redeemAll();
@@ -78,15 +84,17 @@ contract AgaveTreasuryRedeemerTest is Test {
         vm.stopPrank();
 
         uint256[] memory postDAO = updateDAO();
-        uint256[] memory postUser = userBalances(kpk);
-        uint256[] memory postExpRedemption = expectedRedemption(kpkBalance);
+        uint256[] memory postUser = userBalances(testUser);
+        uint256[] memory postExpRedemption = expectedRedemption(testBalance);
 
         for (uint8 i = 0; i < assets.length; i++) {
-            assertEq(postUser[i] - preUser[i], kpkRedemptions[i]);
-            assertEq(kpkBalance + dexBalance, AGVE.balanceOf(DAO) - burned);
-            assertEq(preDAO[i] - postDAO[i], kpkRedemptions[i] + dexRedemption[i]);
-            assertGe(postExpRedemption[i], kpkRedemptions[i]);
+            assertEq(postUser[i], preUser[i], '1');
+            assertApproxEqAbs(preDAO[i] - postDAO[i], kpkRedemptions[i] + dexRedemption[i], 1, '2');
+            assertApproxEqAbs(postExpRedemption[i], preExpRedemption[i], 1, '3');
         }
+        assertEq(kpkBalance + dexBalance, AGVE.balanceOf(DAO) - burned, '4');
+        assertEq(AGVE.balanceOf(kpk),0, '5');
+        assertEq(AGVE.balanceOf(dex),0, '6');
     }
 
     function test_maxRedeem() public {

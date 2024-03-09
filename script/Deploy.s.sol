@@ -39,7 +39,7 @@ contract Deploy is Script {
         //////////////////////////////////////////////////////////////*/
 
         vm.startBroadcast(deployerPrivateKey);
-
+/*
         // Deploy AgaveTreasuryWithdrawer
         AgaveTreasuryWithdrawer withdrawer = new AgaveTreasuryWithdrawer();
         console2.log("Deployed Treasury Withdrawer: %s", address(withdrawer));
@@ -47,7 +47,7 @@ contract Deploy is Script {
         // Deploy AgaveReimbursementReclaimer
         AgaveReimbursementReclaimer reclaimer = new AgaveReimbursementReclaimer();
         console2.log("Deployed Reimbursement Reclaimer: %s", address(reclaimer));
-
+*/
         // Deploy AgaveTreasuryRedeemer
         AgaveTreasuryRedeemer redeemer = new AgaveTreasuryRedeemer();
         console2.log("Deployed Treasury Redeemer: %s", address(redeemer));
