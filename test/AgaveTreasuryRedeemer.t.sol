@@ -56,6 +56,12 @@ contract AgaveTreasuryRedeemerTest is Test {
         redeemer.redeemAll();
     }
 
+    function test_RevertWhen_DAOHasNotApprovedAsset() public {
+        vm.startPrank(testUser);
+        vm.expectRevert(bytes("Needs approval higher than Amount"));
+        redeemer.redeemAll();
+    }
+
     function test_sequenceOfUsers() public {
         uint256 burned = AGVE.balanceOf(DAO);
         uint256[] memory preDAO = updateDAO();
